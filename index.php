@@ -673,6 +673,10 @@ function generate_main_dashboard_XML($project_instance, $date)
                       AND user2repository.credential=updatefile.author) AS userupdates,";
     }
 
+  // Modified by Soonho Kong
+  // 2013-09-04
+  // ORDER BY b.starttime DESC is added.
+  // to sort builds by time first
   $sql =  "SELECT b.id,b.siteid,
                   bu.status AS updatestatus,
                   i.osname AS osname,
@@ -729,7 +733,7 @@ function generate_main_dashboard_XML($project_instance, $date)
                   WHERE s.id=b.siteid AND ".$date_clause."
                    b.projectid='$projectid' AND b2g.buildid=b.id AND gp.buildgroupid=g.id AND b2g.groupid=g.id
                    AND gp.starttime<'$end_UTCDate' AND (gp.endtime>'$end_UTCDate' OR gp.endtime='1980-01-01 00:00:00')
-                  ".$subprojectsql." ".$filter_sql." ORDER BY gp.position ASC,b.name ASC,b.siteid ASC,b.stamp DESC".$limit_sql;
+                  ".$subprojectsql." ".$filter_sql." ORDER BY b.starttime DESC, gp.position ASC,b.name ASC,b.siteid ASC,b.stamp DESC".$limit_sql;
 
 
   // We shouldn't get any builds for group that have been deleted (otherwise something is wrong)
