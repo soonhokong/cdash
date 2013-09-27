@@ -1215,7 +1215,16 @@ function generate_main_dashboard_XML($project_instance, $date)
         $xml .= add_XML_value("userupdates", $build_array["userupdates"]);
         }
       $xml .= add_XML_value("buildid", $build_array["id"]);
-      $xml .= add_XML_value("generator", $build_array["generator"]);
+
+      // ------ Added by Soonho Kong, 2013/09/27 --------------------------------
+      // Display git commit hash and subject line using generator field
+      $lean_generator=$build_array["generator"];
+      if (strpos($lean_generator, '###') !== false) {
+	      $lean_generator="@".str_replace("###", "</br>", $lean_generator);
+      }
+      // ------------------------------------------------------------------------
+
+      $xml .= add_XML_value("generator", $lean_generator);
       $xml .= add_XML_value("upload-file-count", $build_array["builduploadfiles"]);
   
       if($build_array['countbuildnotes']>0)
