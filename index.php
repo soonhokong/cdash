@@ -1486,7 +1486,17 @@ function generate_main_dashboard_XML($projectid,$date)
       {
       $xml .= "<coverage>";
       $xml .= "  <site>".$build_array["sitename"]."</site>";
-      $xml .= "  <buildname>".$build_array["name"]."</buildname>";
+      // Added by Soonho Kong, 2013/09/27
+      // Add git-commit hash to the buildname
+      $lean_build_name = $build_array["name"];
+      $lean_generator = $build_array["generator"];
+      $lean_generator_delim_pos = strpos($lean_generator, '###');
+      if ($lean_generator_delim_pos !== false) {
+        $lean_generator = substr($lean_generator, 0, $lean_generator_delim_pos);
+        $lean_build_name .= "_".$lean_generator;
+      }
+      $xml .= "  <buildname>".$lean_build_name."</buildname>";
+      // ---------------------------------------------------------------------------
       $xml .= "  <buildid>".$build_array["id"]."</buildid>";
 
       @$percent = round($coverage_array["loctested"]/($coverage_array["loctested"]+$coverage_array["locuntested"])*100,2);
@@ -1548,7 +1558,17 @@ function generate_main_dashboard_XML($projectid,$date)
       {
       $xml .= "<dynamicanalysis>";
       $xml .= "  <site>".$build_array["sitename"]."</site>";
-      $xml .= "  <buildname>".$build_array["name"]."</buildname>";
+      // Added by Soonho Kong, 2013/09/27
+      // Add git-commit hash to the buildname
+      $lean_build_name = $build_array["name"];
+      $lean_generator = $build_array["generator"];
+      $lean_generator_delim_pos = strpos($lean_generator, '###');
+      if ($lean_generator_delim_pos !== false) {
+        $lean_generator = substr($lean_generator, 0, $lean_generator_delim_pos);
+        $lean_build_name .= "_".$lean_generator;
+      }
+      $xml .= "  <buildname>".$lean_build_name."</buildname>";
+      // ---------------------------------------------------------------------------
       $xml .= "  <buildid>".$build_array["id"]."</buildid>";
 
       $xml .= "  <checker>".$dynanalysis_array["checker"]."</checker>";
