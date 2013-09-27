@@ -1157,264 +1157,276 @@ function generate_main_dashboard_XML($project_instance, $date)
       $previousgroupposition = $groupposition;
       }
 
-
-    $xml .= "<build>";
-
     $received_builds[] = $build_array["sitename"]."_".$build_array["name"];
 
     $buildid = $build_array["id"];
     $groupid = $build_array["groupid"];
     $siteid = $build_array["siteid"];
     $countbuildids = count($build_array['buildids']);
-    $xml .= add_XML_value("countbuildids", $countbuildids);
-    if ($countbuildids>1)
-      {
-      $xml .= add_XML_value("multiplebuildshyperlink", get_multiple_builds_hyperlink($build_array, $filterdata));
-      }
 
-    $xml .= add_XML_value("type", strtolower($build_array["type"]));
-    $xml .= add_XML_value("site", $build_array["sitename"]);
-    $xml .= add_XML_value("siteoutoforder", $build_array["siteoutoforder"]);
-    $xml .= add_XML_value("siteid", $siteid);
-    $xml .= add_XML_value("buildname", $build_array["name"]);
-
-    // Trying to determing the platform based on the OSName and the buildname
-    $buildplatform = '';
-    if(strtolower(substr($build_array["osname"],0,7)) == 'windows')
-      {
-      $buildplatform='windows';
-      }
-    else if(strtolower(substr($build_array["osname"],0,8)) == 'mac os x')
-      {
-      $buildplatform='mac';
-      }
-    else if(strtolower(substr($build_array["osname"],0,5)) == 'linux')
-      {
-      $buildplatform='linux';
-      }
-    else if(strtolower(substr($build_array["osname"],0,7)) == 'freebsd')
-      {
-      $buildplatform='freebsd';
-      }
-
-    $xml .= add_XML_value("buildplatform",$buildplatform);
-    if(isset($build_array["userupdates"]))
-      {
-      $xml .= add_XML_value("userupdates", $build_array["userupdates"]);
-      }
-    $xml .= add_XML_value("buildid", $build_array["id"]);
-    $xml .= add_XML_value("generator", $build_array["generator"]);
-    $xml .= add_XML_value("upload-file-count", $build_array["builduploadfiles"]);
-
-    if($build_array['countbuildnotes']>0)
-      {
-      $xml .= add_XML_value("buildnote","1");
-      }
-
-    if($build_array['countnotes']>0)
-      {
-      $xml .= add_XML_value("note","1");
-      }
-
-    // Are there labels for this build?
     //
-    $labels_array = $build_array['labels'];
-    if(!empty($labels_array))
+    // Soonho Kong, 2013/09/12
+    // Wrap "<build>" with conditional.
+    //
+    // Since travis-ci only gives 50-min to build & test, we
+    // want to have a separate job which only runs valgrind.
+    // This modification delete the column on the
+    // build(Experimental) section, but still show on the
+    // Dynamic Analysis section.
+    //
+    if((!empty($labels_array) || !empty($build_array['updatestarttime']) ||
+       $build_array['countbuilderrors']>=0 || $build_array['hastest'] != 0) 
+       && $build_array['hasconfigurestatus'] != 0)
       {
-      $xml .= '<labels>';
-      foreach($labels_array as $label)
+      $xml .= "<build>";
+      $xml .= add_XML_value("countbuildids", $countbuildids);
+      if ($countbuildids>1)
         {
-        $xml .= add_XML_value("label",$label);
+        $xml .= add_XML_value("multiplebuildshyperlink", get_multiple_builds_hyperlink($build_array, $filterdata));
         }
-      $xml .= '</labels>';
-      }
-
-
-    $xml .= "<update>";
-
-    $countupdatefiles = $build_array['countupdatefiles'];
-    $totalUpdatedFiles += $countupdatefiles;
-    $xml .= add_XML_value("files", $countupdatefiles);
-    if(!empty($build_array['updatestarttime']))
-      {
-      $xml .= add_XML_value("defined",1);
-
-      if($build_array['countupdateerrors']>0)
+  
+      $xml .= add_XML_value("type", strtolower($build_array["type"]));
+      $xml .= add_XML_value("site", $build_array["sitename"]);
+      $xml .= add_XML_value("siteid", $siteid);
+      $xml .= add_XML_value("buildname", $build_array["name"]);
+  
+      // Trying to determing the platform based on the OSName and the buildname
+      $buildplatform = '';
+      if(strtolower(substr($build_array["osname"],0,7)) == 'windows')
         {
-        $xml .= add_XML_value("errors", 1);
-        $totalUpdateError += 1;
+        $buildplatform='windows';
+        }
+      else if(strtolower(substr($build_array["osname"],0,8)) == 'mac os x')
+        {
+        $buildplatform='mac';
+        }
+      else if(strtolower(substr($build_array["osname"],0,5)) == 'linux')
+        {
+        $buildplatform='linux';
+        }
+      else if(strtolower(substr($build_array["osname"],0,7)) == 'freebsd')
+        {
+        $buildplatform='freebsd';
+        }
+  
+      $xml .= add_XML_value("buildplatform",$buildplatform);
+      if(isset($build_array["userupdates"]))
+        {
+        $xml .= add_XML_value("userupdates", $build_array["userupdates"]);
+        }
+      $xml .= add_XML_value("buildid", $build_array["id"]);
+      $xml .= add_XML_value("generator", $build_array["generator"]);
+      $xml .= add_XML_value("upload-file-count", $build_array["builduploadfiles"]);
+  
+      if($build_array['countbuildnotes']>0)
+        {
+        $xml .= add_XML_value("buildnote","1");
+        }
+  
+      if($build_array['countnotes']>0)
+        {
+        $xml .= add_XML_value("note","1");
+        }
+  
+      // Are there labels for this build?
+      //
+      $labels_array = $build_array['labels'];
+      if(!empty($labels_array))
+        {
+        $xml .= '<labels>';
+        foreach($labels_array as $label)
+          {
+          $xml .= add_XML_value("label",$label);
+          }
+        $xml .= '</labels>';
+        }
+  
+  
+      $xml .= "<update>";
+  
+      $countupdatefiles = $build_array['countupdatefiles'];
+      $totalUpdatedFiles += $countupdatefiles;
+      $xml .= add_XML_value("files", $countupdatefiles);
+      if(!empty($build_array['updatestarttime']))
+        {
+        $xml .= add_XML_value("defined",1);
+  
+        if($build_array['countupdateerrors']>0)
+          {
+          $xml .= add_XML_value("errors", 1);
+          $totalUpdateError += 1;
+          }
+        else
+          {
+          $xml .= add_XML_value("errors", 0);
+  
+          if($build_array['countupdatewarnings']>0)
+            {
+            $xml .= add_XML_value("warning", 1);
+            $totalUpdateWarning += 1;
+            }
+          }
+  
+        $duration = $build_array['updateduration'];
+        $totalUpdateDuration += $duration;
+        $xml .= add_XML_value("time", time_difference($duration*60.0,true));
+        $xml .= add_XML_value("timefull",$duration);
+        } // end if we have an update
+      $xml .= "</update>";
+  
+  
+      $xml .= "<compilation>";
+  
+      if($build_array['countbuilderrors']>=0)
+        {
+        $nerrors = $build_array['countbuilderrors'];
+        $totalerrors += $nerrors;
+        $xml .= add_XML_value("error", $nerrors);
+  
+        $nwarnings = $build_array['countbuildwarnings'];
+        $totalwarnings += $nwarnings;
+        $xml .= add_XML_value("warning", $nwarnings);
+        $duration = $build_array['buildduration'];
+        $totalBuildDuration += $duration;
+        $xml .= add_XML_value("time",time_difference($duration*60.0,true));
+        $xml .= add_XML_value("timefull",$duration);
+  
+        $diff = $build_array['countbuilderrordiffp'];
+        if($diff!=0)
+          {
+          $xml .= add_XML_value("nerrordiffp", $diff);
+          }
+        $diff = $build_array['countbuilderrordiffn'];
+        if($diff!=0)
+          {
+          $xml .= add_XML_value("nerrordiffn", $diff);
+          }
+  
+        $diff = $build_array['countbuildwarningdiffp'];
+        if($diff!=0)
+          {
+          $xml .= add_XML_value("nwarningdiffp", $diff);
+          }
+        $diff = $build_array['countbuildwarningdiffn'];
+        if($diff!=0)
+          {
+          $xml .= add_XML_value("nwarningdiffn", $diff);
+          }
+        }
+      $xml .= "</compilation>";
+  
+      $xml .= "<configure>";
+  
+      if($build_array['hasconfigurestatus'] != 0)
+        {
+        $xml .= add_XML_value("error", $build_array['countconfigureerrors']);
+        $totalConfigureError += $build_array['countconfigureerrors'];
+  
+        $nconfigurewarnings = $build_array['countconfigurewarnings'];
+        $xml .= add_XML_value("warning", $nconfigurewarnings);
+        $totalConfigureWarning += $nconfigurewarnings;
+  
+        $diff = $build_array['countconfigurewarningdiff'];
+        if($diff!=0)
+          {
+          $xml .= add_XML_value("warningdiff", $diff);
+          }
+  
+        $duration = $build_array['configureduration'];
+        $totalConfigureDuration += $duration;
+        $xml .= add_XML_value("time",time_difference($duration*60.0,true));
+        $xml .= add_XML_value("timefull",$duration);
+        }
+      $xml .= "</configure>";
+  
+  
+      if($build_array['hastest'] != 0)
+        {
+        $xml .= "<test>";
+  
+        $nnotrun = $build_array['counttestsnotrun'];
+  
+        if($build_array['counttestsnotrundiffp']!=0)
+          {
+          $xml .= add_XML_value("nnotrundiffp",$build_array['counttestsnotrundiffp']);
+          }
+        if($build_array['counttestsnotrundiffn']!=0)
+          {
+          $xml .= add_XML_value("nnotrundiffn",$build_array['counttestsnotrundiffn']);
+          }
+  
+        $nfail = $build_array['counttestsfailed'];
+  
+        if($build_array['counttestsfaileddiffp']!=0)
+          {
+          $xml .= add_XML_value("nfaildiffp", $build_array['counttestsfaileddiffp']);
+          }
+        if($build_array['counttestsfaileddiffn']!=0)
+          {
+          $xml .= add_XML_value("nfaildiffn", $build_array['counttestsfaileddiffn']);
+          }
+  
+        $npass = $build_array['counttestspassed'];
+  
+        if($build_array['counttestspasseddiffp']!=0)
+          {
+          $xml .= add_XML_value("npassdiffp", $build_array['counttestspasseddiffp']);
+          }
+        if($build_array['counttestspasseddiffn']!=0)
+          {
+          $xml .= add_XML_value("npassdiffn", $build_array['counttestspasseddiffn']);
+          }
+  
+        if($project_array["showtesttime"] == 1)
+          {
+          $xml .= add_XML_value("timestatus", $build_array['countteststimestatusfailed']);
+  
+          if($build_array['countteststimestatusfaileddiffp']!=0)
+            {
+            $xml .= add_XML_value("ntimediffp", $build_array['countteststimestatusfaileddiffp']);
+            }
+          if($build_array['countteststimestatusfaileddiffn']!=0)
+            {
+            $xml .= add_XML_value("ntimediffn", $build_array['countteststimestatusfaileddiffn']);
+            }
+          }
+  
+        $totalnotrun += $nnotrun;
+        $totalfail += $nfail;
+        $totalpass += $npass;
+  
+        $xml .= add_XML_value("notrun",$nnotrun);
+        $xml .= add_XML_value("fail",$nfail);
+        $xml .= add_XML_value("pass",$npass);
+  
+        $duration = $build_array['testsduration'];
+        $totalTestsDuration += $duration;
+        $xml .= add_XML_value("time",time_difference($duration*60.0,true));
+        $xml .= add_XML_value("timefull",$duration);
+  
+        $xml .= "</test>";
+        }
+  
+  
+      $starttimestamp = strtotime($build_array["starttime"]." UTC");
+      $submittimestamp = strtotime($build_array["submittime"]." UTC");
+      $xml .= add_XML_value("builddatefull",$starttimestamp); // use the default timezone
+  
+      // If the data is more than 24h old then we switch from an elapsed to a normal representation
+      if(time()-$starttimestamp<86400)
+        {
+        $xml .= add_XML_value("builddate",date(FMT_DATETIMEDISPLAY,$starttimestamp)); // use the default timezone
+        $xml .= add_XML_value("builddateelapsed",time_difference(time()-$starttimestamp,false,'ago')); // use the default timezone
         }
       else
         {
-        $xml .= add_XML_value("errors", 0);
-
-        if($build_array['countupdatewarnings']>0)
-          {
-          $xml .= add_XML_value("warning", 1);
-          $totalUpdateWarning += 1;
-          }
+        $xml .= add_XML_value("builddateelapsed",date(FMT_DATETIMEDISPLAY,$starttimestamp)); // use the default timezone
+        $xml .= add_XML_value("builddate",time_difference(time()-$starttimestamp,false,'ago')); // use the default timezone
         }
-
-      $duration = $build_array['updateduration'];
-      $totalUpdateDuration += $duration;
-      $xml .= add_XML_value("time", time_difference($duration*60.0,true));
-      $xml .= add_XML_value("timefull",$duration);
-      } // end if we have an update
-    $xml .= "</update>";
-
-
-    $xml .= "<compilation>";
-
-    if($build_array['countbuilderrors']>=0)
-      {
-      $nerrors = $build_array['countbuilderrors'];
-      $totalerrors += $nerrors;
-      $xml .= add_XML_value("error", $nerrors);
-
-      $nwarnings = $build_array['countbuildwarnings'];
-      $totalwarnings += $nwarnings;
-      $xml .= add_XML_value("warning", $nwarnings);
-      $duration = $build_array['buildduration'];
-      $totalBuildDuration += $duration;
-      $xml .= add_XML_value("time",time_difference($duration*60.0,true));
-      $xml .= add_XML_value("timefull",$duration);
-
-      $diff = $build_array['countbuilderrordiffp'];
-      if($diff!=0)
-        {
-        $xml .= add_XML_value("nerrordiffp", $diff);
-        }
-      $diff = $build_array['countbuilderrordiffn'];
-      if($diff!=0)
-        {
-        $xml .= add_XML_value("nerrordiffn", $diff);
-        }
-
-      $diff = $build_array['countbuildwarningdiffp'];
-      if($diff!=0)
-        {
-        $xml .= add_XML_value("nwarningdiffp", $diff);
-        }
-      $diff = $build_array['countbuildwarningdiffn'];
-      if($diff!=0)
-        {
-        $xml .= add_XML_value("nwarningdiffn", $diff);
-        }
-      }
-    $xml .= "</compilation>";
-
-    $xml .= "<configure>";
-
-    if($build_array['hasconfigurestatus'] != 0)
-      {
-      $xml .= add_XML_value("error", $build_array['countconfigureerrors']);
-      $totalConfigureError += $build_array['countconfigureerrors'];
-
-      $nconfigurewarnings = $build_array['countconfigurewarnings'];
-      $xml .= add_XML_value("warning", $nconfigurewarnings);
-      $totalConfigureWarning += $nconfigurewarnings;
-
-      $diff = $build_array['countconfigurewarningdiff'];
-      if($diff!=0)
-        {
-        $xml .= add_XML_value("warningdiff", $diff);
-        }
-
-      $duration = $build_array['configureduration'];
-      $totalConfigureDuration += $duration;
-      $xml .= add_XML_value("time",time_difference($duration*60.0,true));
-      $xml .= add_XML_value("timefull",$duration);
-      }
-    $xml .= "</configure>";
-
-
-    if($build_array['hastest'] != 0)
-      {
-      $xml .= "<test>";
-
-      $nnotrun = $build_array['counttestsnotrun'];
-
-      if($build_array['counttestsnotrundiffp']!=0)
-        {
-        $xml .= add_XML_value("nnotrundiffp",$build_array['counttestsnotrundiffp']);
-        }
-      if($build_array['counttestsnotrundiffn']!=0)
-        {
-        $xml .= add_XML_value("nnotrundiffn",$build_array['counttestsnotrundiffn']);
-        }
-
-      $nfail = $build_array['counttestsfailed'];
-
-      if($build_array['counttestsfaileddiffp']!=0)
-        {
-        $xml .= add_XML_value("nfaildiffp", $build_array['counttestsfaileddiffp']);
-        }
-      if($build_array['counttestsfaileddiffn']!=0)
-        {
-        $xml .= add_XML_value("nfaildiffn", $build_array['counttestsfaileddiffn']);
-        }
-
-      $npass = $build_array['counttestspassed'];
-
-      if($build_array['counttestspasseddiffp']!=0)
-        {
-        $xml .= add_XML_value("npassdiffp", $build_array['counttestspasseddiffp']);
-        }
-      if($build_array['counttestspasseddiffn']!=0)
-        {
-        $xml .= add_XML_value("npassdiffn", $build_array['counttestspasseddiffn']);
-        }
-
-      if($project_array["showtesttime"] == 1)
-        {
-        $xml .= add_XML_value("timestatus", $build_array['countteststimestatusfailed']);
-
-        if($build_array['countteststimestatusfaileddiffp']!=0)
-          {
-          $xml .= add_XML_value("ntimediffp", $build_array['countteststimestatusfaileddiffp']);
-          }
-        if($build_array['countteststimestatusfaileddiffn']!=0)
-          {
-          $xml .= add_XML_value("ntimediffn", $build_array['countteststimestatusfaileddiffn']);
-          }
-        }
-
-      $totalnotrun += $nnotrun;
-      $totalfail += $nfail;
-      $totalpass += $npass;
-
-      $xml .= add_XML_value("notrun",$nnotrun);
-      $xml .= add_XML_value("fail",$nfail);
-      $xml .= add_XML_value("pass",$npass);
-
-      $duration = $build_array['testsduration'];
-      $totalTestsDuration += $duration;
-      $xml .= add_XML_value("time",time_difference($duration*60.0,true));
-      $xml .= add_XML_value("timefull",$duration);
-
-      $xml .= "</test>";
-      }
-
-
-    $starttimestamp = strtotime($build_array["starttime"]." UTC");
-    $submittimestamp = strtotime($build_array["submittime"]." UTC");
-    $xml .= add_XML_value("builddatefull",$starttimestamp); // use the default timezone
-
-    // If the data is more than 24h old then we switch from an elapsed to a normal representation
-    if(time()-$starttimestamp<86400)
-      {
-      $xml .= add_XML_value("builddate",date(FMT_DATETIMEDISPLAY,$starttimestamp)); // use the default timezone
-      $xml .= add_XML_value("builddateelapsed",time_difference(time()-$starttimestamp,false,'ago')); // use the default timezone
-      }
-    else
-      {
-      $xml .= add_XML_value("builddateelapsed",date(FMT_DATETIMEDISPLAY,$starttimestamp)); // use the default timezone
-      $xml .= add_XML_value("builddate",time_difference(time()-$starttimestamp,false,'ago')); // use the default timezone
-      }
-    $xml .= add_XML_value("submitdate",date(FMT_DATETIMEDISPLAY,$submittimestamp));// use the default timezone
-    $xml .= add_XML_value("nerrorlog",$build_array["nerrorlog"]);// use the default timezone
-    $xml .= "</build>";
-
+      $xml .= add_XML_value("submitdate",date(FMT_DATETIMEDISPLAY,$submittimestamp));// use the default timezone
+      $xml .= add_XML_value("nerrorlog",$build_array["nerrorlog"]);// use the default timezone
+      $xml .= "</build>";
+    }
 
     // Coverage
     //
